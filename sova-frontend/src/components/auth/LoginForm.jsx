@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom"; // Import useNavigate
 
 export default function LoginForm() {
   const [form, setForm] = useState({
@@ -7,6 +8,7 @@ export default function LoginForm() {
   });
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
+  const navigate = useNavigate(); // Initialize navigate
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -27,10 +29,17 @@ export default function LoginForm() {
       const data = await res.json();
 
       if (res.ok) {
-        setMessage({ type: "success", text: "Login successful!" });
+        setMessage({
+          type: "success",
+          text: "Login successful! Redirecting...",
+        });
         localStorage.setItem("token", data.token);
 
         console.log("Logged in user:", data);
+        // Redirect to dashboard after a short delay to show the message
+        setTimeout(() => {
+          navigate("/dashboard"); // Redirect to /dashboard
+        }, 1000); // 1-second delay
       } else {
         setMessage({ type: "error", text: data.message || "Login failed" });
       }

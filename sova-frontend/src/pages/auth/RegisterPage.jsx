@@ -1,4 +1,4 @@
-import RegisterForm from "../../components/RegisterForm";
+import RegisterForm from "../../components/auth/RegisterForm";
 import useTitle from "../../hooks/useTitle";
 
 export default function RegisterPage() {

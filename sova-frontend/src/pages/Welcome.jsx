@@ -10,8 +10,9 @@ export default function Welcome() {
     setIsLoggedIn(!!token);
   }, []);
 
-  const handleGoHome = () => {
-    navigate("/home");
+  const handleGoToDashboard = () => {
+    // Renamed function
+    navigate("/dashboard"); // Navigate to dashboard
   };
 
   return (
@@ -23,10 +24,10 @@ export default function Welcome() {
         <div className="space-x-4 mt-6">
           {isLoggedIn ? (
             <button
-              onClick={handleGoHome}
+              onClick={handleGoToDashboard} // Updated onClick handler
               className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
             >
-              Go to Home
+              Go to Dashboard {/* Updated button text */}
             </button>
           ) : (
             <>

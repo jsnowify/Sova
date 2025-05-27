@@ -1,4 +1,4 @@
-import LoginForm from "../../components/LoginForm";
+import LoginForm from "../../components/auth/LoginForm";
 import useTitle from "../../hooks/useTitle";
 
 export default function LoginPage() {
