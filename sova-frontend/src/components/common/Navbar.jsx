@@ -34,7 +34,6 @@ export default function Navbar() {
     };
     checkAuthAndUser();
 
-    // Optional: Listen to storage changes to update login status across tabs
     const handleStorageChange = () => {
       checkAuthAndUser();
     };

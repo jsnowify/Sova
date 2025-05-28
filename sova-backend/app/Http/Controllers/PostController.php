@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Post;
 use App\Http\Requests\StorePostRequest;
 use App\Http\Requests\UpdatePostRequest;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 
@@ -18,15 +19,26 @@ class PostController extends Controller
         $this->authorizeResource(Post::class, 'post');
     }
 
-    public function index()
+    public function index(Request $request) // <-- Add Request $request here
     {
-        // $this->authorize('viewAny', Post::class); // Handled by authorizeResource
+        // $this->authorize('viewAny', Post::class); // Still handled by authorizeResource for the Post model overall
 
-        $posts = Post::with('user:id,name')
-                     ->whereNotNull('published_at') // Only show published posts by default
-                     ->where('published_at', '<=', now())
-                     ->latest('published_at')
-                     ->paginate(10);
+        $query = Post::with('user:id,name')->latest('updated_at'); // Default query, order by latest updated
+
+        // Get the authenticated user. For API routes with Sanctum, $request->user() is the way.
+        $user = $request->user();
+
+        // Check if the authenticated user is an admin or editor
+        if ($user && in_array($user->role, ['admin', 'editor'])) {
+            // Admins and Editors see all posts (no additional 'published_at' status filter)
+            // They will see both published and unpublished (draft) posts.
+        } else {
+            // Public view (or users without admin/editor roles): only show published posts
+            $query->whereNotNull('published_at')
+                  ->where('published_at', '<=', now());
+        }
+
+        $posts = $query->paginate(10); // Apply pagination
         return response()->json($posts);
     }
 
