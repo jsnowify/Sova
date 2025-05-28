@@ -66,11 +66,9 @@ export default function BlogHomePage() {
     <div className="min-h-screen bg-slate-50 py-12">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <header className="mb-12 text-center">
-          <h1 className="text-5xl font-extrabold text-slate-800">
-            The Sova Blog
-          </h1>
+          <h1 className="text-5xl font-extrabold text-slate-800">Times Sova</h1>
           <p className="mt-4 text-lg text-slate-600">
-            Insights, news, and articles from the Sova team.
+            Insights, news, and articles.
           </p>
         </header>
 

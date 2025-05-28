@@ -95,31 +95,6 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-slate-100">
-      <header className="bg-white shadow-md sticky top-0 z-50">
-        {/* ... (header content remains the same) ... */}
-        <div className="container mx-auto px-6 py-4 flex justify-between items-center">
-          <h1 className="text-3xl font-bold text-slate-800">Sova Dashboard</h1>
-          {user && (
-            <div className="flex items-center space-x-4">
-              <div className="text-right">
-                <p className="text-sm font-medium text-slate-700">
-                  Welcome, {user.name}
-                </p>
-                <p className="text-xs text-slate-500">
-                  {user.email} ({user.role})
-                </p>
-              </div>
-              <button
-                onClick={handleLogout}
-                className="px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition duration-150 ease-in-out"
-              >
-                Logout
-              </button>
-            </div>
-          )}
-        </div>
-      </header>
-
       <main className="container mx-auto px-6 py-8">
         {error && user && (
           <div
@@ -172,10 +147,6 @@ export default function DashboardPage() {
           </div>
         </section>
       </main>
-
-      <footer className="py-8 text-center text-slate-500 text-sm">
-        &copy; {new Date().getFullYear()} Sova Application. All rights reserved.
-      </footer>
     </div>
   );
 }

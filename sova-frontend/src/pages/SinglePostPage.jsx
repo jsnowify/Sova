@@ -1,23 +1,93 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { useParams, Link, useLocation } from "react-router-dom"; // Added useLocation
-import { getPostBySlug, createComment } from "../services/postService";
-import useTitle from "../hooks/useTitle"; // Your custom hook
-import { getToken } from "../utils/api"; // To check if user is logged in
+import { useParams, Link, useNavigate, useLocation } from "react-router-dom";
+import {
+  getPostBySlug,
+  createComment,
+  deletePost,
+} from "../services/postService";
+import useTitle from "../hooks/useTitle";
+import { getToken, apiRequest } from "../utils/api";
+
+// Simple SVG Icon Components (You can place these outside the component or in a separate file)
+const EditIcon = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    className="h-4 w-4 mr-1.5 inline-block"
+    viewBox="0 0 20 20"
+    fill="currentColor"
+  >
+    <path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" />
+    <path
+      fillRule="evenodd"
+      d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z"
+      clipRule="evenodd"
+    />
+  </svg>
+);
+
+const DeleteIcon = () => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    className="h-4 w-4 mr-1.5 inline-block"
+    viewBox="0 0 20 20"
+    fill="currentColor"
+  >
+    <path
+      fillRule="evenodd"
+      d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
+      clipRule="evenodd"
+    />
+  </svg>
+);
 
 export default function SinglePostPage() {
   const { slug } = useParams();
+  const navigate = useNavigate();
   const [post, setPost] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  useTitle(
+    post
+      ? `${post.title} - Sova Blog`
+      : loading
+      ? "Loading Post..."
+      : "Post Not Found - Sova Blog"
+  );
 
-  // Call useTitle directly. It will re-run when `post` changes.
-  useTitle(post ? `${post.title} - Sova Blog` : "Loading Post...");
+  const [currentUser, setCurrentUser] = useState(null);
+  const [loadingCurrentUser, setLoadingCurrentUser] = useState(true);
 
   const [newComment, setNewComment] = useState("");
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
   const [commentError, setCommentError] = useState(null);
   const isLoggedIn = !!getToken();
-  const location = useLocation(); // For the login redirect state
+  const location = useLocation();
+
+  useEffect(() => {
+    const fetchCurrentUser = async () => {
+      if (isLoggedIn) {
+        try {
+          setLoadingCurrentUser(true);
+          const response = await apiRequest("/user", "GET");
+          if (response.ok && response.data) {
+            setCurrentUser(response.data);
+          } else {
+            console.error(
+              "Failed to fetch current user:",
+              response.data?.message
+            );
+          }
+        } catch (err) {
+          console.error("Error fetching current user:", err);
+        } finally {
+          setLoadingCurrentUser(false);
+        }
+      } else {
+        setLoadingCurrentUser(false);
+      }
+    };
+    fetchCurrentUser();
+  }, [isLoggedIn]);
 
   const fetchPost = useCallback(async () => {
     try {
@@ -25,35 +95,28 @@ export default function SinglePostPage() {
       setError(null);
       const data = await getPostBySlug(slug);
       setPost(data);
-      // The useTitle hook at the top of the component will automatically update the title
-      // when the `post` state changes.
     } catch (err) {
       setError(err.message || `Failed to load post: ${slug}`);
-      // useTitle will also update if `post` remains null and error is set
     } finally {
       setLoading(false);
     }
-  }, [slug]); // `useTitle` itself is not a dependency here.
+  }, [slug]);
 
   useEffect(() => {
     if (slug) {
       fetchPost();
     } else {
-      // If no slug, set a generic title or handle as an error
-      // useTitle("Post Not Found - Sova Blog"); // Handled by the main useTitle call based on post state
       setError("Post slug not found in URL.");
       setLoading(false);
     }
   }, [slug, fetchPost]);
 
   const handleCommentChange = (e) => {
-    setNewComment(e.target.value);
+    /* ... (same as before) ... */ setNewComment(e.target.value);
   };
-
   const handleCommentSubmit = async (e) => {
-    e.preventDefault();
+    /* ... (same as before) ... */ e.preventDefault();
     if (!newComment.trim() || !post) return;
-
     setIsSubmittingComment(true);
     setCommentError(null);
     try {
@@ -70,15 +133,40 @@ export default function SinglePostPage() {
     }
   };
 
-  if (loading) {
+  const handleDeletePost = async () => {
+    if (
+      !post ||
+      !window.confirm(
+        "Are you sure you want to delete this post? This action cannot be undone."
+      )
+    ) {
+      return;
+    }
+    try {
+      await deletePost(post.id); // This calls the service, which uses the updated apiRequest
+      alert("Post deleted successfully."); // This should now be reached without the JSON error
+      navigate("/blog"); // Redirect to blog home page
+    } catch (err) {
+      alert(`Failed to delete post: ${err.message || "Please try again."}`);
+      console.error("Delete post error:", err);
+    }
+  };
+
+  const canManagePost =
+    currentUser &&
+    post &&
+    (currentUser.id === post.user_id || currentUser.role === "admin");
+
+  if (loading || (isLoggedIn && loadingCurrentUser)) {
+    /* ... (same as before) ... */
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
-        <p className="text-xl text-slate-700">Loading post...</p>
+        <p className="text-xl text-slate-700">Loading post data...</p>
       </div>
     );
   }
-
   if (error) {
+    /* ... (same as before) ... */
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 p-6 text-center">
         <h2 className="text-2xl font-semibold text-red-600 mb-3">
@@ -94,8 +182,8 @@ export default function SinglePostPage() {
       </div>
     );
   }
-
   if (!post) {
+    /* ... (same as before) ... */
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
         <p className="text-xl text-slate-700">Post not found.</p>
@@ -115,10 +203,28 @@ export default function SinglePostPage() {
     <div className="min-h-screen bg-slate-50 py-12">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-4xl">
         <article className="bg-white shadow-xl rounded-lg p-6 sm:p-8 lg:p-10">
+          {isLoggedIn && canManagePost && (
+            <div className="mb-6 flex justify-end space-x-3 border-b border-slate-200 pb-4">
+              <Link
+                to={`/edit-post/${post.slug}`}
+                className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-yellow-500 rounded-md hover:bg-yellow-600 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:ring-offset-1 transition-colors"
+              >
+                <EditIcon /> Edit
+              </Link>
+              <button
+                onClick={handleDeletePost}
+                className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1 transition-colors"
+              >
+                <DeleteIcon /> Delete
+              </button>
+            </div>
+          )}
+
+          {/* ... (rest of the article: image, header, body) ... */}
           {post.image_path && (
             <img
               className="w-full h-auto max-h-96 object-cover rounded-lg mb-8"
-              src={post.image_path} // Ensure this path is correct or construct if needed
+              src={post.image_path}
               alt={post.title}
             />
           )}
@@ -133,16 +239,17 @@ export default function SinglePostPage() {
             </div>
           </header>
           <div
-            className="prose prose-lg lg:prose-xl max-w-none text-slate-800" // Ensure @tailwindcss/typography is configured
+            className="prose prose-lg lg:prose-xl max-w-none text-slate-800"
             dangerouslySetInnerHTML={{ __html: post.body }}
           />
         </article>
 
-        {/* Comments Section */}
+        {/* Comments Section ... (same as before) ... */}
         <section className="mt-12 bg-white shadow-xl rounded-lg p-6 sm:p-8 lg:p-10">
           <h2 className="text-2xl font-bold text-slate-800 mb-8 pb-4 border-b border-slate-200">
             Comments ({post.comments?.length || 0})
           </h2>
+          {/* ... (comment form and list) ... */}
           {isLoggedIn ? (
             <form onSubmit={handleCommentSubmit} className="mb-10">
               <label
@@ -177,7 +284,7 @@ export default function SinglePostPage() {
               Please{" "}
               <Link
                 to="/login"
-                state={{ from: location.pathname }} // Pass current location for redirect after login
+                state={{ from: location.pathname }}
                 className="text-blue-600 hover:underline font-semibold"
               >
                 log in
@@ -185,8 +292,6 @@ export default function SinglePostPage() {
               to post a comment.
             </p>
           )}
-
-          {/* Comments List */}
           {post.comments && post.comments.length > 0 ? (
             <ul className="space-y-6">
               {post.comments.map((comment) => (
@@ -194,11 +299,6 @@ export default function SinglePostPage() {
                   key={comment.id}
                   className="flex space-x-4 p-4 bg-slate-50 rounded-lg shadow"
                 >
-                  {/* Optional Avatar Placeholder
-                  <div className="flex-shrink-0 w-10 h-10 rounded-full bg-slate-300 flex items-center justify-center text-slate-500 font-semibold">
-                    {comment.user?.name ? comment.user.name.charAt(0).toUpperCase() : 'A'}
-                  </div>
-                  */}
                   <div className="flex-grow">
                     <div className="flex items-center justify-between mb-1">
                       <p className="font-semibold text-slate-800 text-sm">
@@ -225,7 +325,7 @@ export default function SinglePostPage() {
               ))}
             </ul>
           ) : (
-            (!isLoggedIn || (isLoggedIn && post.comments?.length === 0)) && ( // Show "No comments yet" if logged in and no comments, or always if not logged in (and not showing login prompt)
+            (!isLoggedIn || (isLoggedIn && post.comments?.length === 0)) && (
               <p className="text-slate-600 text-center py-4">
                 No comments yet. Be the first to share your thoughts!
               </p>

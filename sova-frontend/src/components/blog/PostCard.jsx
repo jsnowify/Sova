@@ -23,7 +23,7 @@ export default function PostCard({ post }) {
         />
       )}
       <div className="p-6">
-        <h2 className="text-2xl font-bold text-slate-800 mb-2 hover:text-blue-600 transition-colors">
+        <h2 className="text-2xl font-bold text-slate-800 mb-2 hover:text-gray-700 transition-colors">
           <Link to={`/blog/${post.slug}`}>{post.title}</Link>
         </h2>
         <p className="text-sm text-slate-500 mb-1">
@@ -35,7 +35,7 @@ export default function PostCard({ post }) {
         <p className="text-slate-700 text-sm mb-4">{excerpt}</p>
         <Link
           to={`/blog/${post.slug}`}
-          className="inline-block px-5 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-150 ease-in-out"
+          className="inline-block px-5 py-2 bg-black text-white text-sm font-medium rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-150 ease-in-out"
         >
           Read More
         </Link>
