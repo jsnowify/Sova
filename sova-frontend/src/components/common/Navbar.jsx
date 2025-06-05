@@ -17,7 +17,7 @@ export default function Navbar() {
           if (response.ok && response.data) {
             setCurrentUser(response.data);
           } else {
-            // Token might be invalid, clear it
+            // Token
             localStorage.removeItem("token");
             setIsLoggedIn(false);
             setCurrentUser(null);
@@ -45,14 +45,13 @@ export default function Navbar() {
       window.removeEventListener("storage", handleStorageChange);
       window.removeEventListener("authChange", handleStorageChange);
     };
-  }, [navigate]); // Re-check on navigate to potentially reflect immediate login/logout
+  }, [navigate]);
 
   const handleLogout = async () => {
     try {
       await apiRequest("/logout", "POST"); //
     } catch (error) {
       console.error("Logout API call failed:", error);
-      // Proceed with frontend logout even if API call fails
     } finally {
       localStorage.removeItem("token");
       setIsLoggedIn(false);
@@ -62,8 +61,6 @@ export default function Navbar() {
     }
   };
 
-  // Effect to update isLoggedIn when token changes (e.g. after login on another page)
-  // This is an additional listener for robustness.
   useEffect(() => {
     const updateLoginStatus = () => {
       const currentToken = getToken(); //

@@ -11,7 +11,7 @@ export default function MainLayout() {
         <Outlet />
       </main>
       <footer className="bg-black text-white text-center p-4 text-sm">
-        &copy; {new Date().getFullYear()} Sova Application. All Rights Reserved.
+        &copy; {new Date().getFullYear()} Sova. All Rights Reserved.
       </footer>
     </div>
   );

@@ -1,9 +1,6 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { getAllPosts, deletePost } from "../../services/postService"; // Adjust path if needed
-// Assuming you have these icons or will create them (can be simple text too)
-// You can reuse EditIcon and DeleteIcon from SinglePostPage if they are in a common file
-// For now, let's define simple ones here or use text.
+import { getAllPosts, deletePost } from "../../services/postService";
 
 const ViewIcon = () => (
   <svg
@@ -61,7 +58,7 @@ export default function DashboardPostsList() {
     try {
       setLoading(true);
       setError(null);
-      // This uses the modified getAllPosts which gets all posts for admin/editor
+
       const data = await getAllPosts(page);
       setPostsData(data);
     } catch (err) {
@@ -84,10 +81,8 @@ export default function DashboardPostsList() {
     ) {
       try {
         await deletePost(postId);
-        // Refetch posts for the current page to update the list
+
         fetchPostsForDashboard(currentPage);
-        // Or, if the current page might become empty, navigate to page 1 or previous page
-        // For simplicity, just refetching current page.
       } catch (err) {
         alert(`Failed to delete post: ${err.message}`);
       }

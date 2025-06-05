@@ -6,16 +6,17 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\Log;
 
 class AuthController extends Controller
 {
     public function register(Request $request)
     {
         $validated = $request->validate([
-            'name' => 'required',
-            'email' => 'required|email|unique:users',
-            'password' => 'required|min:6',
-            'role' => 'in:admin,editor' // Optional: default = editor
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users',
+            'password' => 'required|string|min:6',
+            'role' => 'sometimes|in:admin,editor'
         ]);
 
         $user = User::create([
@@ -25,7 +26,7 @@ class AuthController extends Controller
             'role' => $validated['role'] ?? 'editor'
         ]);
 
-        return response()->json(['message' => 'User registered', 'user' => $user]);
+        return response()->json(['message' => 'User registered successfully', 'user' => $user], 201);
     }
 
     public function login(Request $request)
@@ -38,24 +39,29 @@ class AuthController extends Controller
         $user = User::where('email', $request->email)->first();
 
         if (! $user || ! Hash::check($request->password, $user->password)) {
+            Log::warning('Login failed for email: ' . $request->email);
             throw ValidationException::withMessages([
                 'email' => ['The credentials are incorrect.'],
             ]);
         }
 
         $token = $user->createToken('auth_token')->plainTextToken;
+        Log::info('Login successful for user: ' . $user->email);
 
         return response()->json([
             'message' => 'Login successful',
             'token' => $token,
-            'user' => $user
+            'user' => $user // Send the whole user object
         ]);
     }
 
     public function logout(Request $request)
     {
-        $request->user()->currentAccessToken()->delete();
-
-        return response()->json(['message' => 'Logged out']);
+        if ($request->user()) {
+            $request->user()->currentAccessToken()->delete();
+            Log::info('User logged out: ' . $request->user()->email);
+            return response()->json(['message' => 'Logged out successfully']);
+        }
+        return response()->json(['message' => 'Unauthenticated.'], 401);
     }
 }

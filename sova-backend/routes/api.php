@@ -5,7 +5,8 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\PostController;
 use App\Http\Controllers\UserController;
-use App\Http\Controllers\CommentController; // <--- ADD THIS IMPORT
+use App\Http\Controllers\CommentController;
+use Illuminate\Support\Facades\Log;
 
 /*
 |--------------------------------------------------------------------------
@@ -24,11 +25,16 @@ Route::get('/posts/{post:slug}', [PostController::class, 'show']);
 
 // Routes requiring authentication
 Route::middleware('auth:sanctum')->group(function () {
-    // User related
+    // This is the original /user route that should be here
     Route::get('/user', function (Request $request) {
-        return $request->user();
+        Log::info('Accessing /api/user. Authenticated user ID: ' . ($request->user() ? $request->user()->id : 'None'));
+        if (!$request->user()) {
+            Log::warning('/api/user: Request is unauthenticated or user could not be determined from token.');
+            return response()->json(['message' => 'Unauthenticated.'], 401);
+        }
+        return $request->user(); // Laravel automatically casts this to JSON
     });
-    Route::post('/logout', [AuthController::class, 'logout']); // Keep only one logout route
+    Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/users', [UserController::class, 'index'])->middleware('admin');
 
     // Post management
@@ -37,12 +43,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/posts/{post}', [PostController::class, 'destroy']);
 
     // Comment creation
-    Route::post('/posts/{post}/comments', [CommentController::class, 'store']); // <--- ADD THIS ROUTE
+    Route::post('/posts/{post}/comments', [CommentController::class, 'store']);
 });
 
 // Public authentication routes
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
-
-// Remove the duplicate logout route from here if you've kept the one inside the group
-// Route::middleware('auth:sanctum')->post('/logout', [AuthController::class, 'logout']);

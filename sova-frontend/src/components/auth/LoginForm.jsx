@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom"; // Import useNavigate
+import { useNavigate, useLocation } from "react-router-dom"; // Import useLocation for redirect state
+import { apiRequest } from "../../utils/api"; // Import your apiRequest function
 
 export default function LoginForm() {
   const [form, setForm] = useState({
@@ -8,7 +9,8 @@ export default function LoginForm() {
   });
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
-  const navigate = useNavigate(); // Initialize navigate
+  const navigate = useNavigate();
+  const location = useLocation(); // To get 'from' state for redirection
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -20,31 +22,58 @@ export default function LoginForm() {
     setMessage({ type: "", text: "" });
 
     try {
-      const res = await fetch("http://127.0.0.1:8000/api/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
-      });
+      // Using your centralized apiRequest function
+      // Ensure API_BASE in utils/api.js is correct!
+      const response = await apiRequest("/login", "POST", form);
 
-      const data = await res.json();
-
-      if (res.ok) {
+      if (response.ok && response.data && response.data.token) {
         setMessage({
           type: "success",
           text: "Login successful! Redirecting...",
         });
-        localStorage.setItem("token", data.token);
+        localStorage.setItem("token", response.data.token);
+        // Optionally store user data if your backend sends it and you need it immediately
+        if (response.data.user) {
+          localStorage.setItem("user", JSON.stringify(response.data.user));
+        }
 
-        console.log("Logged in user:", data);
-        // Redirect to dashboard after a short delay to show the message
+        // Dispatch a custom event to notify other components (like Navbar) that auth state changed
+        window.dispatchEvent(new CustomEvent("authChange"));
+
+        // Redirect to the page the user was trying to access, or dashboard
+        const from = location.state?.from?.pathname || "/dashboard";
         setTimeout(() => {
-          navigate("/dashboard"); // Redirect to /dashboard
-        }, 1000); // 1-second delay
+          navigate(from, { replace: true });
+        }, 1000); // 1-second delay to show message
       } else {
-        setMessage({ type: "error", text: data.message || "Login failed" });
+        // Handle errors from apiRequest or specific backend validation errors
+        if (response.status === 422 && response.data && response.data.errors) {
+          // Laravel validation errors
+          const errorMessages = Object.values(response.data.errors)
+            .flat()
+            .join(" ");
+          setMessage({
+            type: "error",
+            text:
+              errorMessages || "Login failed. Please check your credentials.",
+          });
+        } else {
+          // General error from apiRequest (like "Received an invalid JSON response...")
+          // or other backend errors
+          setMessage({
+            type: "error",
+            text: response.data?.message || "Login failed. Please try again.",
+          });
+        }
       }
     } catch (err) {
-      setMessage({ type: "error", text: "Something went wrong." });
+      // This catch block would typically handle network errors if apiRequest itself throws an error
+      // before returning a structured response. Your current apiRequest tries to always return a structure.
+      console.error("Login form submission error:", err);
+      setMessage({
+        type: "error",
+        text: "Something went wrong during submission.",
+      });
     } finally {
       setLoading(false);
     }
@@ -70,8 +99,11 @@ export default function LoginForm() {
       )}
 
       <div>
-        <label className="block mb-1 font-medium">Email</label>
+        <label className="block mb-1 font-medium" htmlFor="email">
+          Email
+        </label>
         <input
+          id="email"
           name="email"
           type="email"
           className="w-full border px-3 py-2 rounded"
@@ -83,8 +115,11 @@ export default function LoginForm() {
       </div>
 
       <div>
-        <label className="block mb-1 font-medium">Password</label>
+        <label className="block mb-1 font-medium" htmlFor="password">
+          Password
+        </label>
         <input
+          id="password"
           name="password"
           type="password"
           className="w-full border px-3 py-2 rounded"

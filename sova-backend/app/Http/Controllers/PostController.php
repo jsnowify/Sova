@@ -13,38 +13,31 @@ class PostController extends Controller
 {
     public function __construct()
     {
-        // Apply policy to all resource methods, can be more granular
-        // For 'index' and 'show', policy methods allow optional user (public access)
-        // For 'store', 'update', 'destroy', user must be authenticated
         $this->authorizeResource(Post::class, 'post');
     }
 
-    public function index(Request $request) // <-- Add Request $request here
+    public function index(Request $request)
     {
-        // $this->authorize('viewAny', Post::class); // Still handled by authorizeResource for the Post model overall
 
-        $query = Post::with('user:id,name')->latest('updated_at'); // Default query, order by latest updated
+        $query = Post::with('user:id,name')->latest('updated_at');
 
-        // Get the authenticated user. For API routes with Sanctum, $request->user() is the way.
         $user = $request->user();
 
-        // Check if the authenticated user is an admin or editor
         if ($user && in_array($user->role, ['admin', 'editor'])) {
-            // Admins and Editors see all posts (no additional 'published_at' status filter)
-            // They will see both published and unpublished (draft) posts.
+
         } else {
-            // Public view (or users without admin/editor roles): only show published posts
+
             $query->whereNotNull('published_at')
                   ->where('published_at', '<=', now());
         }
 
-        $posts = $query->paginate(10); // Apply pagination
+        $posts = $query->paginate(10);
         return response()->json($posts);
     }
 
     public function store(StorePostRequest $request)
     {
-        // $this->authorize('create', Post::class); // Handled by authorizeResource
+
 
         $validatedData = $request->validated();
         $post = Auth::user()->posts()->create([
@@ -57,16 +50,16 @@ class PostController extends Controller
         return response()->json($post, 201);
     }
 
-    public function show(Post $post) // Uses route model binding
+    public function show(Post $post)
     {
-        $this->authorize('view', $post); // authorizeResource handles this
+        $this->authorize('view', $post);
 
         return response()->json($post->load(['user:id,name', 'comments.user:id,name']));
     }
 
     public function update(UpdatePostRequest $request, Post $post)
     {
-        // $this->authorize('update', $post); // Handled by authorizeResource
+
 
         $validatedData = $request->validated();
         if (isset($validatedData['title'])) {
@@ -78,7 +71,7 @@ class PostController extends Controller
 
     public function destroy(Post $post)
     {
-        // $this->authorize('delete', $post); // Handled by authorizeResource
+
 
         $post->delete();
         return response()->json(null, 204);

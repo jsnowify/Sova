@@ -11,8 +11,7 @@ export default function Welcome() {
   }, []);
 
   const handleGoToDashboard = () => {
-    // Renamed function
-    navigate("/dashboard"); // Navigate to dashboard
+    navigate("/dashboard");
   };
 
   return (
@@ -24,10 +23,10 @@ export default function Welcome() {
         <div className="space-x-4 mt-6">
           {isLoggedIn ? (
             <button
-              onClick={handleGoToDashboard} // Updated onClick handler
+              onClick={handleGoToDashboard}
               className="px-6 py-2 bg-black text-white rounded-full hover:bg-gray-700"
             >
-              Go to Dashboard {/* Updated button text */}
+              Go to Dashboard
             </button>
           ) : (
             <>
